@@ -6,11 +6,13 @@
 set -eu
 
 CHANNEL=stable
-ASC_URL="https://endurasecurity.github.io/${CHANNEL}/sensor/endura.asc"
-DEB_URL="https://endurasecurity.github.io/${CHANNEL}/sensor/deb"
+PKG_NAME="endura-sensor"
 MISSING_CMDS=""
-RPM_URL="https://endurasecurity.github.io/${CHANNEL}/sensor/rpm"
-TGZ_URL="https://endurasecurity.github.io/${CHANNEL}/sensor/tgz/endura-sensor-latest.tgz"
+
+ASC_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/endura.asc"
+DEB_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/deb"
+RPM_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/rpm"
+TGZ_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/tgz/${PKG_NAME}-latest.tgz"
 
 BOLD="\033[1m"
 RESET="\033[0m"
@@ -50,19 +52,19 @@ main() {
 
 install_deb_package() {
     info "installing deb repository: ${DEB_URL}"
-    echo "deb [signed-by=/usr/share/keyrings/endura-keyring.gpg] ${DEB_URL} /" | tee /etc/apt/sources.list.d/sensor.list
+    echo "deb [signed-by=/usr/share/keyrings/endura-keyring.gpg] ${DEB_URL} /" | tee /etc/apt/sources.list.d/${PKG_NAME}.list
     curl -sL "${ASC_URL}" | gpg --dearmor --batch --yes -o /usr/share/keyrings/endura-keyring.gpg
 
-    info "installing sensor package"
+    info "installing ${PKG_NAME} package"
     apt-get update
-    apt-get install -y endura-sensor
+    apt-get install -y ${PKG_NAME}
 
     info "successfully installed endura $(endura version)"
 }
 
 install_rhel_package() {
     info "installing rpm repository: ${RPM_URL}"
-    cat <<EOF | tee /etc/yum.repos.d/sensor.repo
+    cat <<EOF | tee /etc/yum.repos.d/${PKG_NAME}.repo
 [sensor]
 name=Endura Security - Sensor
 baseurl=${RPM_URL}
@@ -71,29 +73,29 @@ gpgcheck=1
 gpgkey=${ASC_URL}
 EOF
 
-    info "installing sensor package"
+    info "installing ${PKG_NAME} package"
     dnf makecache
-    dnf install -y endura-sensor
+    dnf install -y ${PKG_NAME}
 
     info "successfully installed endura $(endura version)"
 }
 
 install_tgz_package() {
     info "downloading tgz package: ${TGZ_URL}"
-    curl -sL "$TGZ_URL" -o /tmp/endura-sensor.tgz
-    curl -sL "$TGZ_URL.sig" -o /tmp/endura-sensor.tgz.sig
+    curl -sL "$TGZ_URL" -o /tmp/${PKG_NAME}.tgz
+    curl -sL "$TGZ_URL.sig" -o /tmp/${PKG_NAME}.tgz.sig
 
     if ! curl -fsSL "$ASC_URL" | gpg --import; then
         fail "failed to import GPG public key from $ASC_URL"
     fi
 
-    if ! gpg --verify /tmp/endura-sensor.tgz.sig /tmp/endura-sensor.tgz; then
+    if ! gpg --verify /tmp/${PKG_NAME}.tgz.sig /tmp/${PKG_NAME}.tgz; then
         fail "tgz package signature verification failed"
     fi
 
     info "installing tgz package"
-    tar -C / -xzf /tmp/endura-sensor.tgz
-    rm -f /tmp/endura-sensor.tgz /tmp/endura-sensor.tgz.sig
+    tar -C / -xzf /tmp/${PKG_NAME}.tgz
+    rm -f /tmp/${PKG_NAME}.tgz /tmp/${PKG_NAME}.tgz.sig
 
     info "successfully installed endura $(endura version)"
 }
