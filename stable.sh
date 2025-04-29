@@ -9,7 +9,7 @@ CHANNEL=stable
 PKG_NAME="endura-sensor"
 MISSING_CMDS=""
 
-ASC_URL="https://endurasecurity.github.io/${CHANNEL}/endura.asc"
+ASC_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/endura.asc"
 DEB_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/deb"
 RPM_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/rpm"
 TGZ_URL="https://endurasecurity.github.io/${CHANNEL}/${PKG_NAME}/tgz/${PKG_NAME}-latest.tgz"
