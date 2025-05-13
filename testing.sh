@@ -123,8 +123,8 @@ fail() {
 
 needs_cmd() {
     if ! check_cmd "$1"; then
-        warn "needs '$1' (command not found)\n"
-        MISSING_CMDS="$MISSING_CMDS $1"
+        warn "needs '$1' (command not found)"
+        MISSING_CMDS="$1 $MISSING_CMDS"
     fi
 }
 
