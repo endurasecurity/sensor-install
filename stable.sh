@@ -22,24 +22,17 @@ WHITE="\033[1;37m"
 YELLOW="\033[1;33m"
 
 main() {
-    needs_cmd cat
-    needs_cmd curl
-    needs_cmd gpg
-    needs_cmd grep
-    needs_cmd printf
-    needs_cmd rm
-    needs_cmd tar
-    needs_cmd tee
-
-    if [ -n "$MISSING_CMDS" ]; then
-        fail "please install the following missing command(s) and try again: $MISSING_CMDS"
-    fi
-
     if [ "$(id -u)" -ne 0 ]; then
         fail "must be run as root"
     fi
 
-    if is_deb_distro; then
+    if [ "${ENDURA_USE_DEB:-false}" = "true" ]; then
+        install_deb_package
+    elif [ "${ENDURA_USE_RPM:-false}" = "true" ]; then
+        install_rpm_package
+    elif [ "${ENDURA_USE_TGZ:-false}" = "true" ]; then
+        install_tgz_package
+    elif is_deb_distro; then
         install_deb_package
     elif is_rhel_distro; then
         install_rhel_package
@@ -51,6 +44,10 @@ main() {
 }
 
 install_deb_package() {
+    info "installing deb dependencies"
+    apt-get update
+    apt-get install -y coreutils curl gnupg
+
     info "installing deb repository: ${DEB_URL}"
     echo "deb [signed-by=/usr/share/keyrings/endura-keyring.gpg] ${DEB_URL} /" | tee /etc/apt/sources.list.d/${PKG_NAME}.list
     curl -sL "${ASC_URL}" | gpg --dearmor --batch --yes -o /usr/share/keyrings/endura-keyring.gpg
@@ -63,7 +60,11 @@ install_deb_package() {
 }
 
 install_rhel_package() {
-    info "installing rpm repository: ${RPM_URL}"
+    info "installing rhel dependencies"
+    dnf makecache
+    dnf install -y coreutils curl gnupg
+
+    info "installing rhel repository: ${RPM_URL}"
     cat <<EOF | tee /etc/yum.repos.d/${PKG_NAME}.repo
 [sensor]
 name=Endura Security - Sensor
@@ -81,6 +82,19 @@ EOF
 }
 
 install_tgz_package() {
+    needs_cmd cat
+    needs_cmd curl
+    needs_cmd gpg
+    needs_cmd grep
+    needs_cmd printf
+    needs_cmd rm
+    needs_cmd tar
+    needs_cmd tee
+
+    if [ -n "$MISSING_CMDS" ]; then
+        fail "please install the following missing command(s) and try again: $MISSING_CMDS"
+    fi
+
     info "downloading tgz package: ${TGZ_URL}"
     curl -sL "$TGZ_URL" -o /tmp/${PKG_NAME}.tgz
     curl -sL "$TGZ_URL.sig" -o /tmp/${PKG_NAME}.tgz.sig
