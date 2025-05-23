@@ -58,7 +58,7 @@ install_rhel_package() {
 
     info "installing rhel repository: ${RPM_URL}"
     cat <<EOF | tee /etc/yum.repos.d/${PKG_NAME}.repo
-[sensor]
+[endura-sensor]
 name=Endura Security - Sensor
 baseurl=${RPM_URL}
 enabled=1
