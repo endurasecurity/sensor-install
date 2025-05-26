@@ -14,8 +14,8 @@ WHITE="\033[1;37m"
 YELLOW="\033[1;33m"
 
 main() {
-    if [ "$(id -u)" -ne 0 ]; then
-        fail "must be run as root"
+    if ! has_admin_privileges; then
+        fail "must be run as root or have cap_sys_admin capability"
     fi
 
     if [ "${ENDURA_USE_DEB:-false}" = "true" ]; then
@@ -33,6 +33,18 @@ main() {
     fi
 
     return 0
+}
+
+has_admin_privileges() {
+    [ "$(id -u)" -eq 0 ] && return 0
+    
+    if command -v capsh >/dev/null 2>&1; then
+        if capsh --print 2>/dev/null | grep -q 'Current:.*cap_sys_admin'; then
+            return 0
+        fi
+    fi
+    
+    return 1
 }
 
 install_deb_package() {
