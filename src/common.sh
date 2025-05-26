@@ -66,7 +66,7 @@ install_deb_package() {
 install_rhel_package() {
     info "installing rhel dependencies"
     dnf makecache
-    dnf install -y coreutils curl gnupg
+    dnf install -y coreutils gnupg
 
     info "installing rhel repository: ${RPM_URL}"
     cat <<EOF | tee /etc/yum.repos.d/${PKG_NAME}.repo
@@ -86,14 +86,11 @@ EOF
 }
 
 install_tgz_package() {
-    needs_cmd cat
     needs_cmd curl
-    needs_cmd gpg
     needs_cmd grep
     needs_cmd printf
     needs_cmd rm
     needs_cmd tar
-    needs_cmd tee
 
     if [ -n "$MISSING_CMDS" ]; then
         fail "please install the following missing command(s) and try again: $MISSING_CMDS"
@@ -103,12 +100,16 @@ install_tgz_package() {
     curl -sL "$TGZ_URL" -o /tmp/${PKG_NAME}.tgz
     curl -sL "$TGZ_URL.sig" -o /tmp/${PKG_NAME}.tgz.sig
 
-    if ! curl -fsSL "$ASC_URL" | gpg --import; then
-        fail "failed to import GPG public key from $ASC_URL"
-    fi
+    if command -v gpg >/dev/null 2>&1; then
+        if ! curl -fsSL "$ASC_URL" | gpg --import; then
+            fail "failed to import GPG public key from $ASC_URL"
+        fi
 
-    if ! gpg --verify /tmp/${PKG_NAME}.tgz.sig /tmp/${PKG_NAME}.tgz; then
-        fail "tgz package signature verification failed"
+        if ! gpg --verify /tmp/${PKG_NAME}.tgz.sig /tmp/${PKG_NAME}.tgz; then
+            fail "tgz package signature verification failed"
+        fi
+    else
+        warn "unable to validate package signature: gpg not installed"
     fi
 
     info "installing tgz package"
